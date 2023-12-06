@@ -3,6 +3,8 @@ File for all of our cupcakes routes
 """
 
 from ninja import NinjaAPI, Schema
+from typing import List
+
 from cupcakes.models import Cupcake
 
 api = NinjaAPI()
@@ -15,9 +17,16 @@ class CupcakeIn(Schema):
     image: str
 
 
-@api.get("/cupcakes")
+class CupcakeOut(Schema):
+    flavor: str
+    size: str
+    image: str
+
+
+@api.get("/cupcakes", response=List[CupcakeOut])
 def getAllCupcakes(request):
-    return
+    cupcakes = Cupcake.objects.all()
+    return cupcakes
 
 
 @api.get("/cupcakes/{id}")
