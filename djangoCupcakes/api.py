@@ -10,11 +10,24 @@ from cupcakes.models import Cupcake
 api = NinjaAPI()
 
 
-class CupcakeIn(Schema):
+class CupcakePostIn(Schema):
     flavor: str
     rating: int
     size: str
     image: str
+
+    class Config:
+        extra = "forbid"
+
+
+class CupcakePatchIn(Schema):
+    flavor: str = None
+    rating: int = None
+    size: str = None
+    image: str = None
+
+    class Config:
+        extra = "forbid"
 
 
 class CupcakeOut(Schema):
@@ -29,20 +42,30 @@ def getAllCupcakes(request):
     return cupcakes
 
 
-@api.get("/cupcakes/{id}")
+@api.get("/cupcakes/{id}", response=CupcakeOut)
 def getCupcake(request, id: int):
-    return
+    cupcake = Cupcake.objects.get(id=id)
+    return cupcake
 
 
 @api.post("/cupcakes")
-def createCupcake(request, payload: CupcakeIn):
+def createCupcake(request, payload: CupcakePostIn):
     cupcake = Cupcake.objects.create(**payload.dict())
     return {"id": cupcake.id}
 
 
-@api.patch("/cupcakes/{id}")
-def updateCupcake(request, id: int):
-    return
+@api.patch("/cupcakes/{id}", response=CupcakeOut)
+def updateCupcake(request, id: int, payload: CupcakePatchIn):
+    cupcake = Cupcake.objects.get(id=id)
+
+    # exclude_unset prevents assignment of attributes that were not passed
+    # in the payload
+    for attr, value in payload.dict(exclude_unset=True).items():
+        setattr(cupcake, attr, value)
+
+    cupcake.save()
+
+    return cupcake
 
 
 @api.delete("/cupcakes/{id}")
