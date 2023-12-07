@@ -2,17 +2,30 @@
 File for all of our cupcakes routes
 """
 
-from ninja import NinjaAPI, ModelSchema, Schema, Swagger
 from typing import List
+
+from ninja import NinjaAPI, ModelSchema, Schema
+from ninja.security import APIKeyHeader
+
 from django.shortcuts import get_object_or_404
 
 from cupcakes.models import Cupcake
 
-api = NinjaAPI(docs=Swagger())
 
-# showExtensions
+api = NinjaAPI()
 
-# Generate schema from model:
+
+class ApiKey(APIKeyHeader):
+    param_name = "Authorization"
+
+    def authenticate(self, request, key):
+        if key == "cupcake":
+            return key
+
+
+header_key = ApiKey()
+
+
 class CupcakePostSchema(ModelSchema):
     class Meta:
         model = Cupcake
@@ -44,13 +57,15 @@ class CupcakePostOut(Schema):
     id: int
 
 # Include summary to provide custom info on dropdown header in docs:
+
+
 @api.get("/cupcakes", response=List[CupcakeOut], summary="PLACEHOLDER")
 def getAllCupcakes(request):
     cupcakes = Cupcake.objects.all()
     return cupcakes
 
 
-@api.get("/cupcakes/{id}", response=CupcakeOut)
+@api.get("/cupcakes/{id}", response=CupcakeOut, auth=header_key)
 def getCupcake(request, id: int):
     cupcake = Cupcake.objects.get(id=id)
     return cupcake
