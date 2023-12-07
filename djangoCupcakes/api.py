@@ -2,23 +2,17 @@
 File for all of our cupcakes routes
 """
 
-from ninja import NinjaAPI, ModelSchema, Schema
+from ninja import NinjaAPI, ModelSchema, Schema, Swagger
 from typing import List
+from django.shortcuts import get_object_or_404
 
 from cupcakes.models import Cupcake
 
-api = NinjaAPI()
+api = NinjaAPI(docs=Swagger())
 
+# showExtensions
 
-# class CupcakePostIn(Schema):
-#     flavor: str
-#     rating: int
-#     size: str
-#     image: str
-
-#     class Config:
-#         extra = "forbid"
-
+# Generate schema from model:
 class CupcakePostSchema(ModelSchema):
     class Meta:
         model = Cupcake
@@ -28,6 +22,7 @@ class CupcakePostSchema(ModelSchema):
         extra = "forbid"
 
 
+# Or declare explicitly:
 class CupcakePatchIn(Schema):
     flavor: str = None
     rating: int = None
@@ -39,12 +34,17 @@ class CupcakePatchIn(Schema):
 
 
 class CupcakeOut(Schema):
+    id: int
     flavor: str
     size: str
     image: str
 
 
-@api.get("/cupcakes", response=List[CupcakeOut])
+class CupcakePostOut(Schema):
+    id: int
+
+# Include summary to provide custom info on dropdown header in docs:
+@api.get("/cupcakes", response=List[CupcakeOut], summary="PLACEHOLDER")
 def getAllCupcakes(request):
     cupcakes = Cupcake.objects.all()
     return cupcakes
@@ -56,10 +56,10 @@ def getCupcake(request, id: int):
     return cupcake
 
 
-@api.post("/cupcakes")
+@api.post("/cupcakes", response=CupcakePostOut)
 def createCupcake(request, payload: CupcakePostSchema):
     cupcake = Cupcake.objects.create(**payload.dict())
-    return {"id": cupcake.id}
+    return cupcake
 
 
 @api.patch("/cupcakes/{id}", response=CupcakeOut)
@@ -78,4 +78,7 @@ def updateCupcake(request, id: int, payload: CupcakePatchIn):
 
 @api.delete("/cupcakes/{id}")
 def deleteCupcake(request, id: int):
-    return
+    cupcake = get_object_or_404(Cupcake, id=id)
+    cupcake.delete()
+
+    return {"deleted": True}
