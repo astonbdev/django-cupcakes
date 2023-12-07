@@ -2,7 +2,7 @@
 File for all of our cupcakes routes
 """
 
-from ninja import NinjaAPI, Schema
+from ninja import NinjaAPI, ModelSchema, Schema
 from typing import List
 
 from cupcakes.models import Cupcake
@@ -10,11 +10,19 @@ from cupcakes.models import Cupcake
 api = NinjaAPI()
 
 
-class CupcakePostIn(Schema):
-    flavor: str
-    rating: int
-    size: str
-    image: str
+# class CupcakePostIn(Schema):
+#     flavor: str
+#     rating: int
+#     size: str
+#     image: str
+
+#     class Config:
+#         extra = "forbid"
+
+class CupcakePostSchema(ModelSchema):
+    class Meta:
+        model = Cupcake
+        fields = ['flavor', 'rating', 'size', 'image']
 
     class Config:
         extra = "forbid"
@@ -49,7 +57,7 @@ def getCupcake(request, id: int):
 
 
 @api.post("/cupcakes")
-def createCupcake(request, payload: CupcakePostIn):
+def createCupcake(request, payload: CupcakePostSchema):
     cupcake = Cupcake.objects.create(**payload.dict())
     return {"id": cupcake.id}
 
